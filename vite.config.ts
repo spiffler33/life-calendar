@@ -6,5 +6,5 @@ export default defineConfig({
   plugins: [react()],
   // For GitHub Pages: set to your repo name (e.g., '/life-calendar/')
   // For local dev or custom domain: use '/'
-  base: '/calendar/',
+  base: '/life-calendar/',
 })
