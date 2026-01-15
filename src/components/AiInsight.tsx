@@ -1,14 +1,15 @@
 /**
  * AI Insight Component
  *
- * On-demand Claude-powered daily insight.
- * Minimal, stoic, actionable.
+ * On-demand Claude-powered daily insight with historical analytics.
+ * Analyzes 30-day patterns, correlations, and day-of-week trends.
  */
 
 import { useState, useCallback } from 'react';
-import { generateDailyInsight, loadApiKey } from '../services/claude';
-import type { HabitDefinition, HabitId } from '../types';
+import { generateEnhancedInsight, loadApiKey } from '../services/claude';
+import type { HabitDefinition, HabitId, DailyData } from '../types';
 import { getDaysUntilEndOfYear } from '../utils/dates';
+import { computeHistoricalAnalytics } from '../utils/analytics';
 
 interface AiInsightProps {
   selectedDate: string;
@@ -18,6 +19,7 @@ interface AiInsightProps {
   tasksCompleted: number;
   totalTasks: number;
   reflection?: string;
+  dailyData: Record<string, DailyData>;
 }
 
 export function AiInsight({
@@ -28,6 +30,7 @@ export function AiInsight({
   tasksCompleted,
   totalTasks,
   reflection,
+  dailyData,
 }: AiInsightProps) {
   const [insight, setInsight] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -46,12 +49,16 @@ export function AiInsight({
         streak: streaks[h.id] || 0,
       }));
 
-      const result = await generateDailyInsight({
+      // Compute 30-day historical analytics
+      const analytics = computeHistoricalAnalytics(dailyData, habits, 30, selectedDate);
+
+      const result = await generateEnhancedInsight({
         habits: habitData,
         tasksCompleted,
         totalTasks,
         daysUntilEndOfYear: getDaysUntilEndOfYear(selectedDate),
         reflection,
+        analytics,
       });
 
       setInsight(result);
@@ -60,7 +67,7 @@ export function AiInsight({
     } finally {
       setLoading(false);
     }
-  }, [habits, completedHabits, streaks, tasksCompleted, totalTasks, selectedDate, reflection]);
+  }, [habits, completedHabits, streaks, tasksCompleted, totalTasks, selectedDate, reflection, dailyData]);
 
   if (!hasApiKey) {
     return null;

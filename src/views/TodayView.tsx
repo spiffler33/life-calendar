@@ -251,6 +251,7 @@ export function TodayView({ selectedDate, onPrevious, onNext, onDateSelect }: To
         tasksCompleted={completedMits}
         totalTasks={totalMits}
         reflection={dayData.reflection}
+        dailyData={state.dailyData}
       />
 
       {/* Two Minute Timer */}
