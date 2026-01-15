@@ -1,8 +1,8 @@
 /**
  * Today View
  *
- * The main daily view showing MITs, habits, and reflection.
- * This is the primary "cockpit" for daily execution.
+ * Daily execution view. MITs, habits, reflection.
+ * Stoic, minimal, factual.
  */
 
 import { useApp } from '../store/AppContext';
@@ -10,22 +10,12 @@ import { DateNavigation } from '../components/DateNavigation';
 import { MitSection } from '../components/MitSection';
 import { HabitGrid } from '../components/HabitGrid';
 import { Reflection } from '../components/Reflection';
-import { isToday } from '../utils/dates';
 
 interface TodayViewProps {
   selectedDate: string;
   onPrevious: () => void;
   onNext: () => void;
   onDateSelect: (date: string) => void;
-}
-
-// Greeting based on time of day
-function getGreeting(): string {
-  const hour = new Date().getHours();
-  if (hour < 12) return 'Shape your morning';
-  if (hour < 17) return 'Shape your afternoon';
-  if (hour < 21) return 'Shape your evening';
-  return 'Reflect on today';
 }
 
 export function TodayView({ selectedDate, onPrevious, onNext, onDateSelect }: TodayViewProps) {
@@ -45,7 +35,6 @@ export function TodayView({ selectedDate, onPrevious, onNext, onDateSelect }: To
   const habits = state.settings.habits;
   const habitCount = getHabitCount(selectedDate);
 
-  // Calculate overall daily progress
   const totalMits = dayData.mit.work.length + dayData.mit.self.length + dayData.mit.family.length;
   const completedMits =
     dayData.mit.work.filter(i => i.completed).length +
@@ -54,7 +43,6 @@ export function TodayView({ selectedDate, onPrevious, onNext, onDateSelect }: To
 
   return (
     <div className="space-y-6">
-      {/* Date navigation */}
       <DateNavigation
         selectedDate={selectedDate}
         onPrevious={onPrevious}
@@ -62,35 +50,20 @@ export function TodayView({ selectedDate, onPrevious, onNext, onDateSelect }: To
         onDateSelect={onDateSelect}
       />
 
-      {/* Greeting - only show for today */}
-      {isToday(selectedDate) && (
-        <div className="text-surface-500 text-sm">
-          {getGreeting()}
-        </div>
-      )}
-
-      {/* Quick stats */}
+      {/* Status line - factual only */}
       {(totalMits > 0 || habitCount > 0) && (
-        <div className="flex items-center gap-4 text-sm text-surface-500">
-          {totalMits > 0 && (
-            <span>
-              {completedMits}/{totalMits} MITs done
-            </span>
-          )}
-          {habitCount > 0 && (
-            <span>
-              {habitCount}/{habits.length} habits
-            </span>
-          )}
+        <div className="text-xs text-text-muted font-mono">
+          {totalMits > 0 && <span>{completedMits}/{totalMits} tasks</span>}
+          {totalMits > 0 && habitCount > 0 && <span className="mx-2">·</span>}
+          {habits.length > 0 && <span>{habitCount}/{habits.length} habits</span>}
         </div>
       )}
 
-      {/* MITs - Three pillars */}
+      {/* MITs */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <MitSection
           category="work"
-          title="Work"
-          subtitle="Professional priorities"
+          title="work"
           items={dayData.mit.work}
           onAdd={text => addMit(selectedDate, 'work', text)}
           onUpdate={(id, text) => updateMit(selectedDate, 'work', id, text)}
@@ -99,8 +72,7 @@ export function TodayView({ selectedDate, onPrevious, onNext, onDateSelect }: To
         />
         <MitSection
           category="self"
-          title="Self / Health"
-          subtitle="Personal growth & wellbeing"
+          title="self"
           items={dayData.mit.self}
           onAdd={text => addMit(selectedDate, 'self', text)}
           onUpdate={(id, text) => updateMit(selectedDate, 'self', id, text)}
@@ -109,8 +81,7 @@ export function TodayView({ selectedDate, onPrevious, onNext, onDateSelect }: To
         />
         <MitSection
           category="family"
-          title="Family"
-          subtitle="Relationships & connection"
+          title="family"
           items={dayData.mit.family}
           onAdd={text => addMit(selectedDate, 'family', text)}
           onUpdate={(id, text) => updateMit(selectedDate, 'family', id, text)}

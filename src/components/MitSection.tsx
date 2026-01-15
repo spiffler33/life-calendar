@@ -1,8 +1,7 @@
 /**
- * MIT (Most Important Things) Section Component
+ * MIT Section
  *
- * Displays and manages the todo items for a single MIT category.
- * Supports adding, editing, deleting, and toggling items.
+ * Task list for a single category. Minimal, keyboard-first.
  */
 
 import type React from 'react';
@@ -12,7 +11,6 @@ import type { TodoItem, MitCategory } from '../types';
 interface MitSectionProps {
   category: MitCategory;
   title: string;
-  subtitle?: string;
   items: TodoItem[];
   onAdd: (text: string) => void;
   onUpdate: (id: string, text: string) => void;
@@ -50,38 +48,27 @@ function MitItem({ item, onUpdate, onDelete, onToggle }: MitItemProps) {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSubmit();
-    } else if (e.key === 'Escape') {
+    if (e.key === 'Enter') handleSubmit();
+    if (e.key === 'Escape') {
       setEditText(item.text);
       setIsEditing(false);
     }
   };
 
   return (
-    <div className="group flex items-start gap-2 sm:gap-3 py-2 sm:py-1.5">
-      {/* Checkbox - larger touch target on mobile */}
+    <div className="group flex items-start gap-3 py-1.5">
       <button
         onClick={onToggle}
-        className={`
-          w-6 h-6 sm:w-5 sm:h-5 rounded border-2 flex-shrink-0 flex items-center justify-center
-          transition-colors cursor-pointer active:scale-95
-          ${
-            item.completed
-              ? 'bg-accent-500 border-accent-500 text-white'
-              : 'border-surface-300 hover:border-accent-400 active:border-accent-500'
-          }
-        `}
-        aria-label={item.completed ? 'Mark as incomplete' : 'Mark as complete'}
+        className="mt-0.5 text-text-muted hover:text-accent transition-colors"
+        aria-label={item.completed ? 'Mark incomplete' : 'Mark complete'}
       >
-        {item.completed && (
-          <svg className="w-4 h-4 sm:w-3 sm:h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-          </svg>
+        {item.completed ? (
+          <span className="text-accent">●</span>
+        ) : (
+          <span>○</span>
         )}
       </button>
 
-      {/* Text / Edit Input */}
       {isEditing ? (
         <input
           ref={inputRef}
@@ -90,38 +77,32 @@ function MitItem({ item, onUpdate, onDelete, onToggle }: MitItemProps) {
           onChange={e => setEditText(e.target.value)}
           onBlur={handleSubmit}
           onKeyDown={handleKeyDown}
-          className="flex-1 text-sm bg-transparent border-b border-surface-300 focus:border-accent-500 outline-none py-0.5"
+          className="flex-1 text-sm bg-transparent border-b border-border focus:border-accent outline-none text-text"
         />
       ) : (
         <span
           onClick={() => setIsEditing(true)}
-          className={`
-            flex-1 text-sm cursor-text
-            ${item.completed ? 'line-through text-surface-400' : 'text-surface-700'}
-          `}
+          className={`flex-1 text-sm cursor-text ${
+            item.completed ? 'line-through text-text-muted' : 'text-text'
+          }`}
         >
           {item.text}
         </span>
       )}
 
-      {/* Delete Button - always visible on mobile, hover on desktop */}
       <button
         onClick={onDelete}
-        className="opacity-50 sm:opacity-0 group-hover:opacity-100 text-surface-400 hover:text-red-500 active:text-red-600 transition-opacity p-2 -m-1 min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 sm:p-1 flex items-center justify-center"
-        aria-label="Delete item"
+        className="opacity-0 group-hover:opacity-100 text-text-muted hover:text-error transition-all text-xs"
+        aria-label="Delete"
       >
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-        </svg>
+        ×
       </button>
     </div>
   );
 }
 
 export function MitSection({
-  category,
   title,
-  subtitle,
   items,
   onAdd,
   onUpdate,
@@ -129,7 +110,6 @@ export function MitSection({
   onToggle,
 }: MitSectionProps) {
   const [newItemText, setNewItemText] = useState('');
-  const inputRef = useRef<HTMLInputElement>(null);
 
   const handleAdd = () => {
     const trimmed = newItemText.trim();
@@ -140,41 +120,27 @@ export function MitSection({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleAdd();
-    }
+    if (e.key === 'Enter') handleAdd();
   };
 
   const completedCount = items.filter(i => i.completed).length;
-  const progress = items.length > 0 ? Math.round((completedCount / items.length) * 100) : 0;
 
   return (
-    <div className="bg-white rounded-xl border border-surface-200 p-4 sm:p-5">
+    <div className="bg-bg-card rounded border border-border p-4">
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
-        <div>
-          <h3 className="font-medium text-surface-800">{title}</h3>
-          {subtitle && <p className="text-xs text-surface-500 mt-0.5">{subtitle}</p>}
-        </div>
+        <span className="text-xs font-medium text-text-secondary uppercase tracking-wide">
+          {title}
+        </span>
         {items.length > 0 && (
-          <div className="text-xs text-surface-500">
+          <span className="text-xs text-text-muted font-mono">
             {completedCount}/{items.length}
-          </div>
+          </span>
         )}
       </div>
 
-      {/* Progress bar */}
-      {items.length > 0 && (
-        <div className="h-1 bg-surface-100 rounded-full overflow-hidden mb-3">
-          <div
-            className="h-full bg-accent-500 transition-all duration-300"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-      )}
-
-      {/* Items list */}
-      <div className="space-y-0.5 mb-3">
+      {/* Items */}
+      <div className="space-y-0">
         {items.map(item => (
           <MitItem
             key={item.id}
@@ -186,26 +152,17 @@ export function MitSection({
         ))}
       </div>
 
-      {/* Add new item */}
-      <div className="flex items-center gap-2">
-        <span className="text-surface-300 text-sm">+</span>
+      {/* Add input */}
+      <div className="flex items-center gap-3 mt-2 pt-2 border-t border-border">
+        <span className="text-text-muted">+</span>
         <input
-          ref={inputRef}
           type="text"
           value={newItemText}
           onChange={e => setNewItemText(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder={`Add ${category === 'self' ? 'a' : 'a'} ${title.toLowerCase()} item...`}
-          className="flex-1 text-sm bg-transparent border-none outline-none text-surface-700 placeholder:text-surface-400"
+          placeholder="add item"
+          className="flex-1 text-sm bg-transparent outline-none text-text placeholder:text-text-muted"
         />
-        {newItemText.trim() && (
-          <button
-            onClick={handleAdd}
-            className="text-xs text-accent-600 hover:text-accent-700 font-medium"
-          >
-            Add
-          </button>
-        )}
       </div>
     </div>
   );

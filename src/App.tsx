@@ -1,11 +1,12 @@
 /**
  * Life Calendar - Main App Component
  *
- * This is the root component that orchestrates the entire app.
- * It manages navigation state and renders the appropriate view.
+ * "Frictionless. Track, reflect, see patterns."
+ * Terminal meets journal - clean, fast, keyboard-first.
  */
 
 import { AppProvider } from './store/AppContext';
+import { ThemeProvider } from './store/ThemeContext';
 import { Layout } from './components/Layout';
 import { useNavigation } from './hooks/useNavigation';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
@@ -17,7 +18,7 @@ import { SettingsView } from './views/SettingsView';
 function AppContent() {
   const nav = useNavigation();
 
-  // Set up keyboard shortcuts
+  // Keyboard shortcuts
   useKeyboardShortcuts({
     onViewChange: nav.setView,
     onGoToToday: nav.goToToday,
@@ -25,13 +26,11 @@ function AppContent() {
     onNextDay: nav.goToNextDay,
   });
 
-  // Handle clicking a day from week/year view
   const handleDateSelect = (date: string) => {
     nav.setSelectedDate(date);
     nav.setView('today');
   };
 
-  // Render the current view
   const renderView = () => {
     switch (nav.view) {
       case 'today':
@@ -81,8 +80,10 @@ function AppContent() {
 
 export default function App() {
   return (
-    <AppProvider>
-      <AppContent />
-    </AppProvider>
+    <ThemeProvider>
+      <AppProvider>
+        <AppContent />
+      </AppProvider>
+    </ThemeProvider>
   );
 }

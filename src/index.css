@@ -5,57 +5,237 @@
 /*
  * Life Calendar - Design System
  *
- * Color palette inspired by Notion meets Hermes:
- * - Mostly neutral, warm grays
- * - One accent color (warm amber/gold) for highlights
- * - Soft, calming feel
+ * "Frictionless. Track, reflect, see patterns."
+ * Terminal meets journal - clean, fast, keyboard-first.
  *
- * Colors are defined in tailwind.config.js
+ * 5 Themes: Dark (default), Matrix, Paper, Midnight, Mono
  */
 
-/* Base styles */
+/* ═══════════════════════════════════════════════════════════════════════════
+   BASE THEME VARIABLES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Typography */
+  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+
+  /* Spacing & Layout */
+  --radius: 8px;
+  --max-width: 680px;
+
+  /* Feedback colors (consistent across themes) */
+  --color-success: #34D399;
+  --color-warning: #FBBF24;
+  --color-error: #EF4444;
+
+  /* Category colors */
+  --color-work: #60A5FA;
+  --color-self: #34D399;
+  --color-family: #FBBF24;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DARK THEME (Default) - Modern Terminal
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+[data-theme="dark"], :root {
+  --color-bg: #111111;
+  --color-bg-card: #1a1a1a;
+  --color-bg-hover: #222222;
+  --color-border: #2a2a2a;
+  --color-border-focus: #3a3a3a;
+  --color-text: #E4E4E7;
+  --color-text-secondary: #71717A;
+  --color-text-muted: #52525B;
+  --color-accent: #34D399;
+  --color-accent-hover: #6EE7B7;
+  --font-family: var(--font-sans);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MATRIX THEME - Hacker Aesthetic
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+[data-theme="matrix"] {
+  --color-bg: #000000;
+  --color-bg-card: #0a0a0a;
+  --color-bg-hover: #111111;
+  --color-border: #00FF41;
+  --color-border-focus: #00FF41;
+  --color-text: #00FF41;
+  --color-text-secondary: #00cc33;
+  --color-text-muted: #009926;
+  --color-accent: #00FF41;
+  --color-accent-hover: #33FF66;
+  --font-family: var(--font-mono);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PAPER THEME - Warm, Literary
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+[data-theme="paper"] {
+  --color-bg: #FAF8F1;
+  --color-bg-card: #FFFFFF;
+  --color-bg-hover: #F5F3EC;
+  --color-border: #E8E4D9;
+  --color-border-focus: #D4CFC2;
+  --color-text: #5C4B3A;
+  --color-text-secondary: #8B7355;
+  --color-text-muted: #A89880;
+  --color-accent: #8B6914;
+  --color-accent-hover: #A67C00;
+  --font-family: var(--font-serif);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MIDNIGHT THEME - Deep Blue Dark
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+[data-theme="midnight"] {
+  --color-bg: #0F0F23;
+  --color-bg-card: #161629;
+  --color-bg-hover: #1c1c36;
+  --color-border: #2a2a4a;
+  --color-border-focus: #3a3a5a;
+  --color-text: #CCCCDD;
+  --color-text-secondary: #8888AA;
+  --color-text-muted: #666688;
+  --color-accent: #58A6FF;
+  --color-accent-hover: #79B8FF;
+  --font-family: var(--font-sans);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MONO THEME - Stark Minimalist
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+[data-theme="mono"] {
+  --color-bg: #FFFFFF;
+  --color-bg-card: #FFFFFF;
+  --color-bg-hover: #F5F5F5;
+  --color-border: #000000;
+  --color-border-focus: #000000;
+  --color-text: #000000;
+  --color-text-secondary: #444444;
+  --color-text-muted: #888888;
+  --color-accent: #000000;
+  --color-accent-hover: #333333;
+  --font-family: var(--font-sans);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BASE STYLES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
 html {
-  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: var(--font-family);
+  font-size: 16px;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 body {
-  @apply bg-surface-50 text-surface-800 min-h-screen;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  min-height: 100vh;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-/* Focus styles for accessibility */
+/* Focus styles */
 *:focus-visible {
-  @apply outline-2 outline-offset-2 outline-accent-500;
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }
 
-/* Smooth transitions for interactive elements */
+/* Smooth transitions */
 button, input, textarea, [role="button"] {
-  @apply transition-colors duration-150;
+  transition: all 0.15s ease;
 }
 
-/* Custom checkbox styling */
-input[type="checkbox"] {
-  @apply w-4 h-4 rounded border-surface-300 text-accent-600;
+/* ═══════════════════════════════════════════════════════════════════════════
+   UTILITY CLASSES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Card style */
+.card {
+  background-color: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
 }
 
-input[type="checkbox"]:focus {
-  @apply ring-accent-500;
+/* Text sizes */
+.text-secondary {
+  color: var(--color-text-secondary);
+  font-size: 11px;
 }
 
-/* Scrollbar styling (optional, for WebKit browsers) */
+.text-muted {
+  color: var(--color-text-muted);
+}
+
+/* Success flash animation */
+@keyframes flash-success {
+  0% { background-color: var(--color-bg-card); }
+  50% { background-color: rgba(52, 211, 153, 0.2); }
+  100% { background-color: var(--color-bg-card); }
+}
+
+.flash-success {
+  animation: flash-success 0.3s ease;
+}
+
+/* Category badges */
+.badge-work {
+  background-color: rgba(96, 165, 250, 0.15);
+  color: var(--color-work);
+  border: 1px solid rgba(96, 165, 250, 0.3);
+}
+
+.badge-self {
+  background-color: rgba(52, 211, 153, 0.15);
+  color: var(--color-self);
+  border: 1px solid rgba(52, 211, 153, 0.3);
+}
+
+.badge-family {
+  background-color: rgba(251, 191, 36, 0.15);
+  color: var(--color-family);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+}
+
+/* Heatmap colors */
+.heat-0 { background-color: var(--color-bg-hover); }
+.heat-1 { background-color: rgba(52, 211, 153, 0.2); }
+.heat-2 { background-color: rgba(52, 211, 153, 0.4); }
+.heat-3 { background-color: rgba(52, 211, 153, 0.6); }
+.heat-4 { background-color: rgba(52, 211, 153, 0.8); }
+.heat-5 { background-color: var(--color-success); }
+
+/* Scrollbar styling */
 ::-webkit-scrollbar {
-  @apply w-2;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-surface-100;
+  background: var(--color-bg);
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-surface-300 rounded-full;
+  background: var(--color-border);
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-surface-400;
+  background: var(--color-border-focus);
+}
+
+/* Selection */
+::selection {
+  background-color: var(--color-accent);
+  color: var(--color-bg);
 }
