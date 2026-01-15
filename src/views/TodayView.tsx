@@ -3,7 +3,6 @@
  *
  * Daily execution view. MITs, habits, reflection.
  * Stoic, minimal, factual.
- * Now with focus prompt, pick-for-me, and 2-min timer.
  */
 
 import { useMemo, useState, useEffect } from 'react';
@@ -14,10 +13,8 @@ import { HabitGrid } from '../components/HabitGrid';
 import { Reflection } from '../components/Reflection';
 import { DailyInspiration } from '../components/DailyInspiration';
 import { AiInsight } from '../components/AiInsight';
-import { FocusPrompt } from '../components/FocusPrompt';
 import { PickForMe } from '../components/PickForMe';
 import { TwoMinuteTimer } from '../components/TwoMinuteTimer';
-import { isToday } from '../utils/dates';
 import type { MitCategory, TodoItem } from '../types';
 
 // Editable focus component
@@ -111,26 +108,11 @@ export function TodayView({ selectedDate, onPrevious, onNext, onDateSelect }: To
   const habits = state.settings.habits;
   const habitCount = getHabitCount(selectedDate);
 
-  // Focus prompt state - only show for today, only once per session
-  const [showFocusPrompt, setShowFocusPrompt] = useState(false);
-  const [focusPromptDismissed, setFocusPromptDismissed] = useState(false);
-
   // Picked task state
   const [pickedTask, setPickedTask] = useState<PickedTask | null>(null);
 
   // Timer state
   const [timerTask, setTimerTask] = useState<{ name: string; category: MitCategory; id: string } | null>(null);
-
-  // Check if we should show focus prompt
-  useEffect(() => {
-    if (isToday(selectedDate) && !dayData.focus && !focusPromptDismissed) {
-      // Small delay so the page renders first
-      const timer = setTimeout(() => setShowFocusPrompt(true), 300);
-      return () => clearTimeout(timer);
-    } else {
-      setShowFocusPrompt(false);
-    }
-  }, [selectedDate, dayData.focus, focusPromptDismissed]);
 
   // Calculate streaks for all habits
   const habitStreaks = useMemo(() => {
@@ -146,16 +128,6 @@ export function TodayView({ selectedDate, onPrevious, onNext, onDateSelect }: To
     dayData.mit.work.filter(i => i.completed).length +
     dayData.mit.self.filter(i => i.completed).length +
     dayData.mit.family.filter(i => i.completed).length;
-
-  const handleSetFocus = (focus: string) => {
-    setFocus(selectedDate, focus);
-    setShowFocusPrompt(false);
-  };
-
-  const handleSkipFocus = () => {
-    setFocusPromptDismissed(true);
-    setShowFocusPrompt(false);
-  };
 
   const handlePick = (category: MitCategory, itemId: string) => {
     const items = dayData.mit[category];
@@ -195,11 +167,6 @@ export function TodayView({ selectedDate, onPrevious, onNext, onDateSelect }: To
   const getPickedIdForCategory = (category: MitCategory) => {
     return pickedTask?.category === category ? pickedTask.item.id : null;
   };
-
-  // Show focus prompt
-  if (showFocusPrompt) {
-    return <FocusPrompt onSetFocus={handleSetFocus} onSkip={handleSkipFocus} />;
-  }
 
   return (
     <div className="space-y-6">
