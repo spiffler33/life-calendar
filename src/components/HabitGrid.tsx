@@ -10,16 +10,18 @@ import type { HabitDefinition, HabitId } from '../types';
 interface HabitGridProps {
   habits: HabitDefinition[];
   completedHabits: Record<HabitId, boolean>;
+  streaks: Record<HabitId, number>;
   onToggle: (habitId: HabitId) => void;
 }
 
 interface HabitToggleProps {
   habit: HabitDefinition;
   isCompleted: boolean;
+  streak: number;
   onToggle: () => void;
 }
 
-function HabitToggle({ habit, isCompleted, onToggle }: HabitToggleProps) {
+function HabitToggle({ habit, isCompleted, streak, onToggle }: HabitToggleProps) {
   return (
     <button
       onClick={onToggle}
@@ -35,12 +37,15 @@ function HabitToggle({ habit, isCompleted, onToggle }: HabitToggleProps) {
       <span className={isCompleted ? 'text-accent' : 'text-text-muted'}>
         {isCompleted ? '●' : '○'}
       </span>
-      <span className="truncate">{habit.label}</span>
+      <span className="truncate flex-1">{habit.label}</span>
+      {streak > 0 && (
+        <span className="text-xs text-text-muted font-mono">{streak}d</span>
+      )}
     </button>
   );
 }
 
-export function HabitGrid({ habits, completedHabits, onToggle }: HabitGridProps) {
+export function HabitGrid({ habits, completedHabits, streaks, onToggle }: HabitGridProps) {
   if (habits.length === 0) return null;
 
   const completedCount = Object.values(completedHabits).filter(Boolean).length;
@@ -62,6 +67,7 @@ export function HabitGrid({ habits, completedHabits, onToggle }: HabitGridProps)
             key={habit.id}
             habit={habit}
             isCompleted={completedHabits[habit.id] || false}
+            streak={streaks[habit.id] || 0}
             onToggle={() => onToggle(habit.id)}
           />
         ))}

@@ -5,12 +5,13 @@
  */
 
 import type React from 'react';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useApp } from '../store/AppContext';
 import { useTheme, THEMES } from '../store/ThemeContext';
 import type { HabitDefinition, HabitCategory } from '../types';
 import { DEFAULT_HABITS } from '../types';
 import { exportData, importData } from '../utils/storage';
+import { saveApiKey, loadApiKey, clearApiKey } from '../services/claude';
 
 interface HabitEditorProps {
   habit: HabitDefinition;
@@ -118,6 +119,21 @@ export function SettingsView() {
   const [addingHabit, setAddingHabit] = useState(false);
   const [newHabitLabel, setNewHabitLabel] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [apiKey, setApiKey] = useState('');
+  const [apiKeyVisible, setApiKeyVisible] = useState(false);
+
+  useEffect(() => {
+    setApiKey(loadApiKey());
+  }, []);
+
+  const handleSaveApiKey = () => {
+    saveApiKey(apiKey);
+  };
+
+  const handleClearApiKey = () => {
+    clearApiKey();
+    setApiKey('');
+  };
 
   const handleExport = () => {
     const data = exportData(state);
@@ -308,6 +324,55 @@ export function SettingsView() {
         {importError && (
           <div className="mt-2 text-xs text-error">{importError}</div>
         )}
+      </section>
+
+      {/* Claude API */}
+      <section className="bg-bg-card rounded border border-border p-4">
+        <div className="text-xs text-text-muted uppercase tracking-wide mb-3">ai insights (claude api)</div>
+        <div className="space-y-3">
+          <div className="flex gap-2">
+            <input
+              type={apiKeyVisible ? 'text' : 'password'}
+              value={apiKey}
+              onChange={e => setApiKey(e.target.value)}
+              placeholder="sk-ant-..."
+              className="flex-1 px-2 py-1.5 text-sm rounded border border-border bg-transparent text-text focus:border-accent outline-none font-mono"
+            />
+            <button
+              onClick={() => setApiKeyVisible(!apiKeyVisible)}
+              className="px-2 py-1.5 text-xs text-text-muted hover:text-text border border-border rounded"
+            >
+              {apiKeyVisible ? 'hide' : 'show'}
+            </button>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={handleSaveApiKey}
+              className="px-3 py-1.5 text-sm rounded border border-border text-text-muted hover:text-accent transition-colors"
+            >
+              save key
+            </button>
+            {apiKey && (
+              <button
+                onClick={handleClearApiKey}
+                className="px-3 py-1.5 text-sm rounded border border-border text-text-muted hover:text-error transition-colors"
+              >
+                clear
+              </button>
+            )}
+          </div>
+          <div className="text-xs text-text-muted">
+            get your key from{' '}
+            <a
+              href="https://console.anthropic.com/settings/keys"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-accent hover:underline"
+            >
+              console.anthropic.com
+            </a>
+          </div>
+        </div>
       </section>
 
       {/* Shortcuts */}

@@ -18,6 +18,7 @@ import type {
 } from '../types';
 import { createEmptyDailyData, createInitialState } from '../types';
 import { loadState, saveState } from '../utils/storage';
+import { addDays, getToday } from '../utils/dates';
 
 // Action types for the reducer
 type Action =
@@ -227,6 +228,7 @@ interface AppContextType {
   getYearTheme: (year: number) => string;
   // Data helpers
   getHabitCount: (date: string) => number;
+  getHabitStreak: (habitId: HabitId, fromDate?: string) => number;
   importData: (data: AppState) => void;
 }
 
@@ -273,6 +275,35 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     [state.settings.yearThemes]
   );
 
+  // Calculate habit streak (consecutive days including today)
+  const getHabitStreak = useCallback(
+    (habitId: HabitId, fromDate: string = getToday()): number => {
+      let streak = 0;
+      let currentDate = fromDate;
+
+      // Check today first - if not done today, check if yesterday was done (streak continues)
+      const todayData = state.dailyData[currentDate];
+      if (!todayData?.habits[habitId]) {
+        // If not done today, start checking from yesterday
+        currentDate = addDays(currentDate, -1);
+      }
+
+      // Count consecutive days going backwards
+      while (true) {
+        const dayData = state.dailyData[currentDate];
+        if (dayData?.habits[habitId]) {
+          streak++;
+          currentDate = addDays(currentDate, -1);
+        } else {
+          break;
+        }
+      }
+
+      return streak;
+    },
+    [state.dailyData]
+  );
+
   const value: AppContextType = {
     state,
     getDailyData,
@@ -287,6 +318,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setYearTheme: (year, theme) => dispatch({ type: 'SET_YEAR_THEME', payload: { year, theme } }),
     getYearTheme,
     getHabitCount,
+    getHabitStreak,
     importData: data => dispatch({ type: 'IMPORT_DATA', payload: data }),
   };
 

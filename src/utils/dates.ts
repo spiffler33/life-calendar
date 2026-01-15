@@ -193,3 +193,13 @@ export function getMonthAbbr(month: number): string {
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   return months[month];
 }
+
+/**
+ * Get days remaining until end of year.
+ */
+export function getDaysUntilEndOfYear(dateStr: string = getToday()): number {
+  const date = parseDate(dateStr);
+  const endOfYear = new Date(date.getFullYear(), 11, 31);
+  const diff = endOfYear.getTime() - date.getTime();
+  return Math.ceil(diff / (1000 * 60 * 60 * 24));
+}
