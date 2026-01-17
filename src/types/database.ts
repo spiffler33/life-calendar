@@ -19,6 +19,7 @@ export type Database = {
           theme: string | null
           personal_context: string | null
           ai_tone: 'stoic' | 'friendly' | 'wise'
+          claude_api_key: string | null
         }
         Insert: {
           id: string
@@ -29,6 +30,7 @@ export type Database = {
           theme?: string | null
           personal_context?: string | null
           ai_tone?: 'stoic' | 'friendly' | 'wise'
+          claude_api_key?: string | null
         }
         Update: {
           id?: string
@@ -39,6 +41,7 @@ export type Database = {
           theme?: string | null
           personal_context?: string | null
           ai_tone?: 'stoic' | 'friendly' | 'wise'
+          claude_api_key?: string | null
         }
         Relationships: []
       }

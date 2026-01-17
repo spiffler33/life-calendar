@@ -125,10 +125,11 @@ export function SettingsView() {
   const [newHabitLabel, setNewHabitLabel] = useState('');
   const [apiKey, setApiKey] = useState('');
   const [apiKeyVisible, setApiKeyVisible] = useState(false);
+  const [apiKeySaving, setApiKeySaving] = useState(false);
   const [personalContext, setPersonalContext] = useState(profile?.personal_context || '');
 
   useEffect(() => {
-    setApiKey(loadApiKey());
+    loadApiKey().then(key => setApiKey(key));
   }, []);
 
   useEffect(() => {
@@ -143,13 +144,27 @@ export function SettingsView() {
     updateProfile({ personal_context: personalContext });
   };
 
-  const handleSaveApiKey = () => {
-    saveApiKey(apiKey);
+  const handleSaveApiKey = async () => {
+    setApiKeySaving(true);
+    try {
+      await saveApiKey(apiKey);
+    } catch (err) {
+      console.error('Failed to save API key:', err);
+    } finally {
+      setApiKeySaving(false);
+    }
   };
 
-  const handleClearApiKey = () => {
-    clearApiKey();
-    setApiKey('');
+  const handleClearApiKey = async () => {
+    setApiKeySaving(true);
+    try {
+      await clearApiKey();
+      setApiKey('');
+    } catch (err) {
+      console.error('Failed to clear API key:', err);
+    } finally {
+      setApiKeySaving(false);
+    }
   };
 
   const handleAddHabit = () => {
@@ -298,14 +313,16 @@ export function SettingsView() {
           <div className="flex gap-2">
             <button
               onClick={handleSaveApiKey}
-              className="px-3 py-1.5 text-sm rounded border border-border text-text-muted hover:text-accent transition-colors"
+              disabled={apiKeySaving}
+              className="px-3 py-1.5 text-sm rounded border border-border text-text-muted hover:text-accent transition-colors disabled:opacity-50"
             >
-              save key
+              {apiKeySaving ? 'saving...' : 'save key'}
             </button>
             {apiKey && (
               <button
                 onClick={handleClearApiKey}
-                className="px-3 py-1.5 text-sm rounded border border-border text-text-muted hover:text-error transition-colors"
+                disabled={apiKeySaving}
+                className="px-3 py-1.5 text-sm rounded border border-border text-text-muted hover:text-error transition-colors disabled:opacity-50"
               >
                 clear
               </button>

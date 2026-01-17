@@ -2,12 +2,14 @@
  * Claude API Service
  *
  * Client-side integration with Claude API for daily insights.
- * API key stored locally, never exported with data.
+ * API key stored in Supabase profile (syncs across devices).
  */
 
 import type { HistoricalAnalytics, HabitAnalytics } from '../utils/analytics';
+import { supabase } from './supabase';
 
-const API_KEY_STORAGE_KEY = 'calendar-claude-api-key';
+// Local cache to avoid repeated DB reads
+let cachedApiKey: string | null = null;
 
 export type AiTone = 'stoic' | 'friendly' | 'wise';
 
@@ -22,16 +24,51 @@ const TONE_INSTRUCTIONS: Record<AiTone, string> = {
   wise: 'You are a thoughtful friend who happens to be wise. Conversational tone. Share insights like with a close friend.',
 };
 
-export function saveApiKey(key: string): void {
-  localStorage.setItem(API_KEY_STORAGE_KEY, key);
+export async function saveApiKey(key: string): Promise<void> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ claude_api_key: key })
+    .eq('id', user.id);
+
+  if (error) throw error;
+  cachedApiKey = key;
 }
 
-export function loadApiKey(): string {
-  return localStorage.getItem(API_KEY_STORAGE_KEY) || '';
+export async function loadApiKey(): Promise<string> {
+  if (cachedApiKey !== null) return cachedApiKey;
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return '';
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('claude_api_key')
+    .eq('id', user.id)
+    .single();
+
+  if (error || !data) return '';
+  cachedApiKey = data.claude_api_key ?? '';
+  return cachedApiKey;
 }
 
-export function clearApiKey(): void {
-  localStorage.removeItem(API_KEY_STORAGE_KEY);
+export async function clearApiKey(): Promise<void> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+
+  await supabase
+    .from('profiles')
+    .update({ claude_api_key: null })
+    .eq('id', user.id);
+
+  cachedApiKey = null;
+}
+
+// Clear cache on logout (call this from AuthContext)
+export function clearApiKeyCache(): void {
+  cachedApiKey = null;
 }
 
 interface HabitData {
@@ -57,7 +94,7 @@ export interface EnhancedInsightRequest extends DayInsightRequest {
  * Generate a personalized daily insight using Claude
  */
 export async function generateDailyInsight(data: DayInsightRequest): Promise<string> {
-  const apiKey = loadApiKey();
+  const apiKey = await loadApiKey();
   if (!apiKey) {
     throw new Error('No API key configured');
   }
@@ -172,7 +209,7 @@ function formatAnalyticsPrompt(analytics: HistoricalAnalytics): string {
  * Generate enhanced insight with historical analytics
  */
 export async function generateEnhancedInsight(data: EnhancedInsightRequest): Promise<string> {
-  const apiKey = loadApiKey();
+  const apiKey = await loadApiKey();
   if (!apiKey) {
     throw new Error('No API key configured');
   }

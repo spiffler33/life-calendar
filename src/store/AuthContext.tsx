@@ -16,6 +16,7 @@ import {
   onAuthStateChange,
   emailToUsername,
 } from '../services/auth';
+import { clearApiKeyCache } from '../services/claude';
 
 /**
  * Profile from profiles table
@@ -180,6 +181,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = useCallback(async (): Promise<void> => {
     setState(prev => ({ ...prev, loading: true }));
     await authSignOut();
+    // Clear cached data
+    clearApiKeyCache();
     // Clear URL hash so next login starts on 'today' view
     window.location.hash = '';
     setState({
