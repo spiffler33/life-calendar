@@ -180,6 +180,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = useCallback(async (): Promise<void> => {
     setState(prev => ({ ...prev, loading: true }));
     await authSignOut();
+    // Clear URL hash so next login starts on 'today' view
+    window.location.hash = '';
     setState({
       user: null,
       profile: null,

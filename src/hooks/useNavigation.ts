@@ -26,11 +26,16 @@ interface UseNavigationReturn extends NavigationState {
   goToNextWeek: () => void;
 }
 
+const VALID_VIEWS: ViewType[] = ['today', 'week', 'year', 'settings'];
+
 function parseHash(): NavigationState {
   const hash = window.location.hash.slice(1);
   const params = new URLSearchParams(hash);
 
-  const view = (params.get('view') as ViewType) || 'today';
+  const rawView = params.get('view');
+  const view: ViewType = rawView && VALID_VIEWS.includes(rawView as ViewType)
+    ? (rawView as ViewType)
+    : 'today';
   const date = params.get('date') || getToday();
   const year = parseInt(params.get('year') || '') || new Date().getFullYear();
 
