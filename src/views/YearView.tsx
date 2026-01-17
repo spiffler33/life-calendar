@@ -6,6 +6,7 @@
 
 import { useState, useMemo } from 'react';
 import { useApp } from '../store/AppContext';
+import { useAuth } from '../store/AuthContext';
 import { getYearCalendarGrid, formatShortDate, getMonthAbbr, isToday, isFuture, parseDate } from '../utils/dates';
 
 interface YearViewProps {
@@ -54,8 +55,11 @@ function DayCell({ date, habitCount, totalHabits, onClick }: DayCellProps) {
 
 export function YearView({ selectedYear, onYearChange, onDateSelect }: YearViewProps) {
   const { state, getHabitCount, getYearTheme, setYearTheme } = useApp();
+  const { profile, updateProfile } = useAuth();
   const [editingTheme, setEditingTheme] = useState(false);
   const [themeInput, setThemeInput] = useState(getYearTheme(selectedYear));
+  const [editingContext, setEditingContext] = useState(false);
+  const [contextInput, setContextInput] = useState(profile?.personal_context || '');
 
   const habits = state.settings.habits;
   const weekStartsOn = state.settings.weekStartsOn;
@@ -132,6 +136,11 @@ export function YearView({ selectedYear, onYearChange, onDateSelect }: YearViewP
     setEditingTheme(false);
   };
 
+  const handleContextSave = () => {
+    updateProfile({ personal_context: contextInput });
+    setEditingContext(false);
+  };
+
   const dayLabels = weekStartsOn === 1
     ? ['M', '', 'W', '', 'F', '', 'S']
     : ['S', '', 'T', '', 'T', '', 'S'];
@@ -191,6 +200,49 @@ export function YearView({ selectedYear, onYearChange, onDateSelect }: YearViewP
         ) : (
           <p className="text-sm text-text-secondary">
             {getYearTheme(selectedYear) || '—'}
+          </p>
+        )}
+      </div>
+
+      {/* Personal Context */}
+      <div className="bg-bg-card rounded border border-border p-4">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs text-text-muted uppercase tracking-wide">what should the ai know about you?</span>
+          {!editingContext && (
+            <button
+              onClick={() => {
+                setContextInput(profile?.personal_context || '');
+                setEditingContext(true);
+              }}
+              className="text-xs text-text-muted hover:text-accent"
+            >
+              edit
+            </button>
+          )}
+        </div>
+        {editingContext ? (
+          <div className="space-y-2">
+            <textarea
+              value={contextInput}
+              onChange={e => setContextInput(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Escape') setEditingContext(false);
+              }}
+              onBlur={handleContextSave}
+              placeholder="health goals, struggles, what matters this year..."
+              className="w-full text-sm text-text bg-transparent border border-border rounded p-2 focus:border-accent outline-none resize-none"
+              rows={3}
+              autoFocus
+            />
+            <div className="flex justify-end">
+              <button onClick={handleContextSave} className="text-xs text-accent">
+                save
+              </button>
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm text-text-secondary whitespace-pre-wrap">
+            {profile?.personal_context || '—'}
           </p>
         )}
       </div>

@@ -4,14 +4,14 @@
  * Configuration. Theme, habits, data.
  */
 
-import type React from 'react';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useApp } from '../store/AppContext';
+import { useAuth } from '../store/AuthContext';
 import { useTheme, THEMES } from '../store/ThemeContext';
 import type { HabitDefinition, HabitCategory } from '../types';
 import { DEFAULT_HABITS } from '../types';
-import { exportData, importData } from '../utils/storage';
 import { saveApiKey, loadApiKey, clearApiKey } from '../services/claude';
+import type { AiTone } from '../services/claude';
 
 interface HabitEditorProps {
   habit: HabitDefinition;
@@ -111,20 +111,37 @@ function HabitEditor({ habit, onUpdate, onDelete }: HabitEditorProps) {
   );
 }
 
+const AI_TONES: { value: AiTone; label: string; description: string }[] = [
+  { value: 'stoic', label: 'stoic', description: 'minimal, focused on leverage' },
+  { value: 'friendly', label: 'friendly', description: 'warm, supportive coach' },
+  { value: 'wise', label: 'wise', description: 'thoughtful friend, conversational' },
+];
+
 export function SettingsView() {
-  const { state, updateSettings, updateHabits, importData: importAppData } = useApp();
+  const { state, updateSettings, updateHabits } = useApp();
+  const { profile, updateProfile, logout } = useAuth();
   const { theme, setTheme } = useTheme();
-  const [showImportConfirm, setShowImportConfirm] = useState(false);
-  const [importError, setImportError] = useState<string | null>(null);
   const [addingHabit, setAddingHabit] = useState(false);
   const [newHabitLabel, setNewHabitLabel] = useState('');
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [apiKey, setApiKey] = useState('');
   const [apiKeyVisible, setApiKeyVisible] = useState(false);
+  const [personalContext, setPersonalContext] = useState(profile?.personal_context || '');
 
   useEffect(() => {
     setApiKey(loadApiKey());
   }, []);
+
+  useEffect(() => {
+    setPersonalContext(profile?.personal_context || '');
+  }, [profile?.personal_context]);
+
+  const handleToneChange = (tone: AiTone) => {
+    updateProfile({ ai_tone: tone });
+  };
+
+  const handleContextSave = () => {
+    updateProfile({ personal_context: personalContext });
+  };
 
   const handleSaveApiKey = () => {
     saveApiKey(apiKey);
@@ -133,50 +150,6 @@ export function SettingsView() {
   const handleClearApiKey = () => {
     clearApiKey();
     setApiKey('');
-  };
-
-  const handleExport = () => {
-    const data = exportData(state);
-    const blob = new Blob([data], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `calendar-${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
-  const handleImportClick = () => fileInputRef.current?.click();
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = event => {
-      const content = event.target?.result as string;
-      const parsed = importData(content);
-      if (parsed) {
-        setShowImportConfirm(true);
-        setImportError(null);
-        (window as unknown as { __pendingImport?: typeof parsed }).__pendingImport = parsed;
-      } else {
-        setImportError('invalid file format');
-      }
-    };
-    reader.readAsText(file);
-    e.target.value = '';
-  };
-
-  const confirmImport = () => {
-    const parsed = (window as unknown as { __pendingImport?: typeof state }).__pendingImport;
-    if (parsed) {
-      importAppData(parsed);
-      delete (window as unknown as { __pendingImport?: typeof state }).__pendingImport;
-    }
-    setShowImportConfirm(false);
   };
 
   const handleAddHabit = () => {
@@ -303,29 +276,6 @@ export function SettingsView() {
         </div>
       </section>
 
-      {/* Data */}
-      <section className="bg-bg-card rounded border border-border p-4">
-        <div className="text-xs text-text-muted uppercase tracking-wide mb-3">data</div>
-        <div className="flex gap-2">
-          <button
-            onClick={handleExport}
-            className="px-3 py-1.5 text-sm rounded border border-border text-text-muted hover:text-text transition-colors"
-          >
-            export
-          </button>
-          <button
-            onClick={handleImportClick}
-            className="px-3 py-1.5 text-sm rounded border border-border text-text-muted hover:text-text transition-colors"
-          >
-            import
-          </button>
-          <input ref={fileInputRef} type="file" accept=".json" onChange={handleFileChange} className="hidden" />
-        </div>
-        {importError && (
-          <div className="mt-2 text-xs text-error">{importError}</div>
-        )}
-      </section>
-
       {/* Claude API */}
       <section className="bg-bg-card rounded border border-border p-4">
         <div className="text-xs text-text-muted uppercase tracking-wide mb-3">ai insights (claude api)</div>
@@ -375,6 +325,55 @@ export function SettingsView() {
         </div>
       </section>
 
+      {/* AI Assistant */}
+      <section className="bg-bg-card rounded border border-border p-4">
+        <div className="text-xs text-text-muted uppercase tracking-wide mb-3">ai assistant</div>
+        <div className="space-y-4">
+          {/* Tone selector */}
+          <div>
+            <div className="text-xs text-text-muted mb-2">tone</div>
+            <div className="space-y-2">
+              {AI_TONES.map(tone => (
+                <label key={tone.value} className="flex items-start gap-2 cursor-pointer group">
+                  <input
+                    type="radio"
+                    name="ai-tone"
+                    value={tone.value}
+                    checked={(profile?.ai_tone || 'stoic') === tone.value}
+                    onChange={() => handleToneChange(tone.value)}
+                    className="mt-0.5 accent-accent"
+                  />
+                  <div>
+                    <span className="text-sm text-text group-hover:text-accent transition-colors">
+                      {tone.label}
+                    </span>
+                    <span className="text-xs text-text-muted ml-2">
+                      - {tone.description}
+                    </span>
+                  </div>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Personal context */}
+          <div>
+            <div className="text-xs text-text-muted mb-2">
+              personal context
+              <span className="ml-2 text-text-muted opacity-60">(also editable in year view)</span>
+            </div>
+            <textarea
+              value={personalContext}
+              onChange={e => setPersonalContext(e.target.value)}
+              onBlur={handleContextSave}
+              placeholder="health goals, struggles, what matters this year..."
+              className="w-full px-2 py-1.5 text-sm rounded border border-border bg-transparent text-text focus:border-accent outline-none resize-none"
+              rows={3}
+            />
+          </div>
+        </div>
+      </section>
+
       {/* Shortcuts */}
       <section className="bg-bg-card rounded border border-border p-4">
         <div className="text-xs text-text-muted uppercase tracking-wide mb-3">shortcuts</div>
@@ -386,22 +385,19 @@ export function SettingsView() {
         </div>
       </section>
 
-      {/* Import modal */}
-      {showImportConfirm && (
-        <div className="fixed inset-0 bg-bg/90 flex items-center justify-center z-50 p-4">
-          <div className="bg-bg-card rounded border border-border p-4 max-w-sm w-full">
-            <div className="text-sm text-text mb-3">replace all data with import?</div>
-            <div className="flex justify-end gap-2">
-              <button onClick={() => setShowImportConfirm(false)} className="text-xs text-text-muted hover:text-text">
-                cancel
-              </button>
-              <button onClick={confirmImport} className="text-xs text-accent">
-                confirm
-              </button>
-            </div>
-          </div>
+      {/* Account */}
+      <section className="bg-bg-card rounded border border-border p-4">
+        <div className="text-xs text-text-muted uppercase tracking-wide mb-3">account</div>
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-text">{profile?.username || 'unknown'}</span>
+          <button
+            onClick={logout}
+            className="px-3 py-1.5 text-sm rounded border border-border text-text-muted hover:text-error hover:border-error transition-colors"
+          >
+            logout
+          </button>
         </div>
-      )}
+      </section>
     </div>
   );
 }

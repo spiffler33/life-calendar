@@ -1,12 +1,11 @@
 /**
  * App State Management using React Context
  *
- * This provides the global state for the entire app.
- * State is automatically persisted to localStorage on every change.
+ * Supabase is the source of truth for authenticated users.
+ * Habits and completions are loaded from and saved to Supabase.
  */
 
-import type React from 'react';
-import { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
+import { createContext, useContext, useReducer, useEffect, useCallback, useRef, useState } from 'react';
 import type {
   AppState,
   AppSettings,
@@ -16,14 +15,26 @@ import type {
   MitCategory,
   HabitDefinition,
 } from '../types';
-import { createEmptyDailyData, createInitialState } from '../types';
-import { loadState, saveState } from '../utils/storage';
+import { createEmptyDailyData, DEFAULT_HABITS } from '../types';
+
+// Create initial state with EMPTY habits (will load from Supabase)
+function createEmptyState(): AppState {
+  return {
+    settings: {
+      habits: [], // Start empty - will load from Supabase
+      yearThemes: [],
+      weekStartsOn: 1,
+    },
+    dailyData: {},
+  };
+}
 import { addDays, getToday } from '../utils/dates';
+import { toggleCompletion, getCompletions, getHabits } from '../services/data';
 
 // Action types for the reducer
 type Action =
-  | { type: 'LOAD_STATE'; payload: AppState }
-  | { type: 'SET_DAILY_DATA'; payload: { date: string; data: DailyData } }
+  | { type: 'SET_HABITS'; payload: HabitDefinition[] }
+  | { type: 'SET_COMPLETIONS'; payload: Record<string, Record<string, boolean>> }
   | { type: 'TOGGLE_HABIT'; payload: { date: string; habitId: HabitId } }
   | { type: 'ADD_MIT'; payload: { date: string; category: MitCategory; text: string; firstStep?: string } }
   | { type: 'UPDATE_MIT'; payload: { date: string; category: MitCategory; id: string; text: string } }
@@ -33,9 +44,7 @@ type Action =
   | { type: 'SET_FOCUS'; payload: { date: string; focus: string } }
   | { type: 'SET_REFLECTION'; payload: { date: string; reflection: string } }
   | { type: 'UPDATE_SETTINGS'; payload: Partial<AppSettings> }
-  | { type: 'UPDATE_HABITS'; payload: HabitDefinition[] }
-  | { type: 'SET_YEAR_THEME'; payload: { year: number; theme: string } }
-  | { type: 'IMPORT_DATA'; payload: AppState };
+  | { type: 'SET_YEAR_THEME'; payload: { year: number; theme: string } };
 
 // Generate a simple unique ID
 function generateId(): string {
@@ -45,16 +54,27 @@ function generateId(): string {
 // Reducer function
 function appReducer(state: AppState, action: Action): AppState {
   switch (action.type) {
-    case 'LOAD_STATE':
-      return action.payload;
-
-    case 'SET_DAILY_DATA': {
+    case 'SET_HABITS': {
       return {
         ...state,
-        dailyData: {
-          ...state.dailyData,
-          [action.payload.date]: action.payload.data,
+        settings: {
+          ...state.settings,
+          habits: action.payload,
         },
+      };
+    }
+
+    case 'SET_COMPLETIONS': {
+      const newDailyData = { ...state.dailyData };
+      for (const [date, habits] of Object.entries(action.payload)) {
+        newDailyData[date] = {
+          ...(newDailyData[date] || createEmptyDailyData(date)),
+          habits,
+        };
+      }
+      return {
+        ...state,
+        dailyData: newDailyData,
       };
     }
 
@@ -217,16 +237,6 @@ function appReducer(state: AppState, action: Action): AppState {
       };
     }
 
-    case 'UPDATE_HABITS': {
-      return {
-        ...state,
-        settings: {
-          ...state.settings,
-          habits: action.payload,
-        },
-      };
-    }
-
     case 'SET_YEAR_THEME': {
       const { year, theme } = action.payload;
       const existingThemes = state.settings.yearThemes.filter(t => t.year !== year);
@@ -239,10 +249,6 @@ function appReducer(state: AppState, action: Action): AppState {
       };
     }
 
-    case 'IMPORT_DATA': {
-      return action.payload;
-    }
-
     default:
       return state;
   }
@@ -251,7 +257,7 @@ function appReducer(state: AppState, action: Action): AppState {
 // Context type
 interface AppContextType {
   state: AppState;
-  // Daily data helpers
+  loading: boolean;
   getDailyData: (date: string) => DailyData;
   toggleHabit: (date: string, habitId: HabitId) => void;
   addMit: (date: string, category: MitCategory, text: string, firstStep?: string) => void;
@@ -261,32 +267,79 @@ interface AppContextType {
   setMitFirstStep: (date: string, category: MitCategory, id: string, firstStep: string) => void;
   setFocus: (date: string, focus: string) => void;
   setReflection: (date: string, reflection: string) => void;
-  // Settings helpers
   updateSettings: (settings: Partial<AppSettings>) => void;
   updateHabits: (habits: HabitDefinition[]) => void;
   setYearTheme: (year: number, theme: string) => void;
   getYearTheme: (year: number) => string;
-  // Data helpers
   getHabitCount: (date: string) => number;
   getHabitStreak: (habitId: HabitId, fromDate?: string) => number;
-  importData: (data: AppState) => void;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [state, dispatch] = useReducer(appReducer, createInitialState());
+  const [state, dispatch] = useReducer(appReducer, createEmptyState());
+  const [loading, setLoading] = useState(true);
+  const initializedRef = useRef(false);
 
-  // Load state from localStorage on mount
+  // Load data from Supabase on mount
   useEffect(() => {
-    const loaded = loadState();
-    dispatch({ type: 'LOAD_STATE', payload: loaded });
+    const loadFromSupabase = async () => {
+      if (initializedRef.current) return;
+      initializedRef.current = true;
+
+      try {
+        // Load habits from Supabase
+        const supabaseHabits = await getHabits();
+
+        if (supabaseHabits.length > 0) {
+          // Convert to HabitDefinition format
+          const habits: HabitDefinition[] = supabaseHabits.map(h => ({
+            id: h.id,
+            label: h.label,
+            description: h.description || undefined,
+            category: h.category as HabitDefinition['category'],
+            emoji: h.emoji || undefined,
+          }));
+          dispatch({ type: 'SET_HABITS', payload: habits });
+        } else {
+          // No habits in Supabase - use defaults
+          dispatch({ type: 'SET_HABITS', payload: DEFAULT_HABITS });
+        }
+
+        // Load completions for last 90 days
+        const today = new Date();
+        const startDate = new Date(today);
+        startDate.setDate(startDate.getDate() - 90);
+
+        const completions = await getCompletions(
+          startDate.toISOString().split('T')[0],
+          today.toISOString().split('T')[0]
+        );
+
+        // Convert to date -> habitId -> true map
+        const completionMap: Record<string, Record<string, boolean>> = {};
+        for (const c of completions) {
+          if (!completionMap[c.date]) {
+            completionMap[c.date] = {};
+          }
+          completionMap[c.date][c.habit_id] = true;
+        }
+
+        if (Object.keys(completionMap).length > 0) {
+          dispatch({ type: 'SET_COMPLETIONS', payload: completionMap });
+        }
+      } catch (err) {
+        console.error('Failed to load from Supabase:', err);
+        // Fall back to defaults on error
+        dispatch({ type: 'SET_HABITS', payload: DEFAULT_HABITS });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadFromSupabase();
   }, []);
-
-  // Save state to localStorage whenever it changes
-  useEffect(() => {
-    saveState(state);
-  }, [state]);
 
   // Helper to get daily data (with fallback to empty)
   const getDailyData = useCallback(
@@ -315,20 +368,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     [state.settings.yearThemes]
   );
 
-  // Calculate habit streak (consecutive days including today)
+  // Calculate habit streak
   const getHabitStreak = useCallback(
     (habitId: HabitId, fromDate: string = getToday()): number => {
       let streak = 0;
       let currentDate = fromDate;
 
-      // Check today first - if not done today, check if yesterday was done (streak continues)
       const todayData = state.dailyData[currentDate];
       if (!todayData?.habits[habitId]) {
-        // If not done today, start checking from yesterday
         currentDate = addDays(currentDate, -1);
       }
 
-      // Count consecutive days going backwards
       while (true) {
         const dayData = state.dailyData[currentDate];
         if (dayData?.habits[habitId]) {
@@ -344,10 +394,33 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     [state.dailyData]
   );
 
+  // Toggle habit with Supabase sync
+  const toggleHabit = useCallback(
+    async (date: string, habitId: HabitId) => {
+      const dayData = state.dailyData[date] || createEmptyDailyData(date);
+      const currentValue = dayData.habits[habitId] || false;
+      const newValue = !currentValue;
+
+      // Update local state immediately
+      dispatch({ type: 'TOGGLE_HABIT', payload: { date, habitId } });
+
+      // Sync to Supabase
+      try {
+        await toggleCompletion(habitId, date, newValue);
+      } catch (err) {
+        console.error('Failed to sync habit to Supabase:', err);
+        // Revert on error
+        dispatch({ type: 'TOGGLE_HABIT', payload: { date, habitId } });
+      }
+    },
+    [state.dailyData]
+  );
+
   const value: AppContextType = {
     state,
+    loading,
     getDailyData,
-    toggleHabit: (date, habitId) => dispatch({ type: 'TOGGLE_HABIT', payload: { date, habitId } }),
+    toggleHabit,
     addMit: (date, category, text, firstStep) => dispatch({ type: 'ADD_MIT', payload: { date, category, text, firstStep } }),
     updateMit: (date, category, id, text) => dispatch({ type: 'UPDATE_MIT', payload: { date, category, id, text } }),
     deleteMit: (date, category, id) => dispatch({ type: 'DELETE_MIT', payload: { date, category, id } }),
@@ -356,12 +429,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setFocus: (date, focus) => dispatch({ type: 'SET_FOCUS', payload: { date, focus } }),
     setReflection: (date, reflection) => dispatch({ type: 'SET_REFLECTION', payload: { date, reflection } }),
     updateSettings: settings => dispatch({ type: 'UPDATE_SETTINGS', payload: settings }),
-    updateHabits: habits => dispatch({ type: 'UPDATE_HABITS', payload: habits }),
+    updateHabits: habits => dispatch({ type: 'SET_HABITS', payload: habits }),
     setYearTheme: (year, theme) => dispatch({ type: 'SET_YEAR_THEME', payload: { year, theme } }),
     getYearTheme,
     getHabitCount,
     getHabitStreak,
-    importData: data => dispatch({ type: 'IMPORT_DATA', payload: data }),
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

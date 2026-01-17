@@ -9,6 +9,19 @@ import type { HistoricalAnalytics, HabitAnalytics } from '../utils/analytics';
 
 const API_KEY_STORAGE_KEY = 'calendar-claude-api-key';
 
+export type AiTone = 'stoic' | 'friendly' | 'wise';
+
+export interface PersonalizationOptions {
+  tone: AiTone;
+  personalContext?: string;
+}
+
+const TONE_INSTRUCTIONS: Record<AiTone, string> = {
+  stoic: 'You are a stoic, Naval Ravikant-inspired life coach. Minimal words. Focus on leverage and compound effects.',
+  friendly: 'You are a warm, supportive coach. Acknowledge struggles. Focus on leverage with encouragement.',
+  wise: 'You are a thoughtful friend who happens to be wise. Conversational tone. Share insights like with a close friend.',
+};
+
 export function saveApiKey(key: string): void {
   localStorage.setItem(API_KEY_STORAGE_KEY, key);
 }
@@ -37,6 +50,7 @@ interface DayInsightRequest {
 
 export interface EnhancedInsightRequest extends DayInsightRequest {
   analytics: HistoricalAnalytics;
+  personalization?: PersonalizationOptions;
 }
 
 /**
@@ -169,8 +183,17 @@ export async function generateEnhancedInsight(data: EnhancedInsightRequest): Pro
 
   const analyticsSection = formatAnalyticsPrompt(data.analytics);
 
-  const prompt = `You are a stoic, Naval Ravikant-inspired life coach. Be extremely brief (2-3 sentences max). No fluff, no emojis.
+  // Get tone instruction (default to stoic)
+  const tone = data.personalization?.tone || 'stoic';
+  const toneInstruction = TONE_INSTRUCTIONS[tone];
 
+  // Build personal context section if available
+  const personalContextSection = data.personalization?.personalContext
+    ? `\nABOUT THIS PERSON:\n${data.personalization.personalContext}\n`
+    : '';
+
+  const prompt = `${toneInstruction} Be extremely brief (2-3 sentences max). No fluff, no emojis.
+${personalContextSection}
 TODAY:
 Habits: ${habitSummary}
 Tasks: ${data.tasksCompleted}/${data.totalTasks}
