@@ -308,14 +308,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         }
 
         // Load completions for last 90 days
-        const today = new Date();
-        const startDate = new Date(today);
-        startDate.setDate(startDate.getDate() - 90);
+        const todayStr = getToday(); // Local date
+        const startDateObj = new Date();
+        startDateObj.setDate(startDateObj.getDate() - 90);
+        const startDateStr = `${startDateObj.getFullYear()}-${String(startDateObj.getMonth() + 1).padStart(2, '0')}-${String(startDateObj.getDate()).padStart(2, '0')}`;
 
-        const completions = await getCompletions(
-          startDate.toISOString().split('T')[0],
-          today.toISOString().split('T')[0]
-        );
+        const completions = await getCompletions(startDateStr, todayStr);
 
         // Convert to date -> habitId -> true map
         const completionMap: Record<string, Record<string, boolean>> = {};
