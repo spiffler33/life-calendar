@@ -516,7 +516,6 @@ function CaptureInput({ value, onChange, onSubmit, isCapturing }: CaptureInputPr
  */
 function sortByUrgency(items: TowerItem[]): TowerItem[] {
   const today = new Date();
-  const todayStr = today.toISOString().split('T')[0];
 
   // Helper to get days until date
   const daysUntil = (dateStr: string | undefined): number | null => {
