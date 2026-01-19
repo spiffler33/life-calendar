@@ -236,15 +236,16 @@ This keeps Tower clean (committed items only) while capturing wishes/thoughts.
 8. ~~Someday collapse/expand~~
 9. ~~CaptureInput (text only first, no AI)~~
 
-### Phase 3: Intelligence
-10. AI capture parsing (Claude API)
-11. "Why this?" explainer
-12. Surfacing logic refinement
+### Phase 3: Intelligence [COMPLETE]
+10. ~~AI capture parsing (Claude API)~~
+11. ~~"Why this?" explainer~~ (removed - trust the algorithm)
+12. ~~Surfacing logic refinement (isEvent model)~~
 
-### Phase 4: Polish
-13. Hold flow (inline)
-14. Completion animation ("done.")
-15. End-of-day summary (optional)
+### Phase 4: Polish [SKIPPED]
+*ADHD brains feel relief, not accomplishment. "Done" is enough.*
+~~13. Hold flow (inline)~~
+~~14. Completion animation~~
+~~15. End-of-day summary~~
 
 ### Phase 5: Social
 16. Friends habit visibility
