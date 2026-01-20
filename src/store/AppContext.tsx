@@ -488,7 +488,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         const towerItems = await getTowerItems();
         dispatch({ type: 'SET_TOWER_ITEMS', payload: towerItems });
       } catch (err) {
-        console.error('Failed to load from Supabase:', err);
+        if (import.meta.env.DEV) console.error('Failed to load from Supabase:', err);
         // Fall back to defaults on error
         dispatch({ type: 'SET_HABITS', payload: DEFAULT_HABITS });
       } finally {
@@ -566,7 +566,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       try {
         await toggleCompletion(habitId, date, newValue);
       } catch (err) {
-        console.error('Failed to sync habit to Supabase:', err);
+        if (import.meta.env.DEV) console.error('Failed to sync habit to Supabase:', err);
         // Revert on error
         dispatch({ type: 'TOGGLE_HABIT', payload: { date, habitId } });
       }
@@ -587,7 +587,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         };
         dispatch({ type: 'ADD_MIT', payload: { date, category, item } });
       } catch (err) {
-        console.error('Failed to create task:', err);
+        if (import.meta.env.DEV) console.error('Failed to create task:', err);
       }
     },
     []
@@ -602,7 +602,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       try {
         await updateTask(id, { text });
       } catch (err) {
-        console.error('Failed to update task:', err);
+        if (import.meta.env.DEV) console.error('Failed to update task:', err);
       }
     },
     []
@@ -617,7 +617,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       try {
         await deleteTask(id);
       } catch (err) {
-        console.error('Failed to delete task:', err);
+        if (import.meta.env.DEV) console.error('Failed to delete task:', err);
       }
     },
     []
@@ -640,7 +640,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       try {
         await updateTask(id, { completed: newCompleted });
       } catch (err) {
-        console.error('Failed to toggle task:', err);
+        if (import.meta.env.DEV) console.error('Failed to toggle task:', err);
         // Revert on error
         dispatch({ type: 'TOGGLE_MIT', payload: { date, category, id, completed: task.completed } });
       }
@@ -657,7 +657,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       try {
         await updateTask(id, { first_step: firstStep });
       } catch (err) {
-        console.error('Failed to update task first step:', err);
+        if (import.meta.env.DEV) console.error('Failed to update task first step:', err);
       }
     },
     []
@@ -672,7 +672,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       try {
         await upsertDailyEntry(date, { focus });
       } catch (err) {
-        console.error('Failed to save focus:', err);
+        if (import.meta.env.DEV) console.error('Failed to save focus:', err);
       }
     },
     []
@@ -687,7 +687,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       try {
         await upsertDailyEntry(date, { reflection });
       } catch (err) {
-        console.error('Failed to save reflection:', err);
+        if (import.meta.env.DEV) console.error('Failed to save reflection:', err);
       }
     },
     []
@@ -702,7 +702,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       try {
         await setYearThemeInDb(year, theme);
       } catch (err) {
-        console.error('Failed to save year theme:', err);
+        if (import.meta.env.DEV) console.error('Failed to save year theme:', err);
       }
     },
     []
@@ -725,7 +725,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         const item = await createTowerItem(input);
         dispatch({ type: 'ADD_TOWER_ITEM', payload: item });
       } catch (err) {
-        console.error('Failed to create tower item:', err);
+        if (import.meta.env.DEV) console.error('Failed to create tower item:', err);
       }
     },
     []
@@ -737,7 +737,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         const item = await updateTowerItem(id, updates);
         dispatch({ type: 'UPDATE_TOWER_ITEM', payload: item });
       } catch (err) {
-        console.error('Failed to update tower item:', err);
+        if (import.meta.env.DEV) console.error('Failed to update tower item:', err);
       }
     },
     []
@@ -749,7 +749,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         const item = await completeTowerItem(id);
         dispatch({ type: 'UPDATE_TOWER_ITEM', payload: item });
       } catch (err) {
-        console.error('Failed to complete tower item:', err);
+        if (import.meta.env.DEV) console.error('Failed to complete tower item:', err);
       }
     },
     []
@@ -763,7 +763,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       try {
         await deleteTowerItem(id);
       } catch (err) {
-        console.error('Failed to delete tower item:', err);
+        if (import.meta.env.DEV) console.error('Failed to delete tower item:', err);
         // Reload tower items on error
         const items = await getTowerItems();
         dispatch({ type: 'SET_TOWER_ITEMS', payload: items });

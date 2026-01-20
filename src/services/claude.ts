@@ -135,8 +135,8 @@ Give one actionable insight. Focus on leverage, compound effects, or what matter
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: { message: 'Unknown error' } }));
-    throw new Error(error.error?.message || 'API request failed');
+    const error = await response.json().catch(() => ({ error: { message: `HTTP ${response.status}` } }));
+    throw new Error(error.error?.message || `API request failed (${response.status})`);
   }
 
   const result = await response.json();
@@ -269,8 +269,8 @@ Focus on leverage and what action today would have compound effects. Be direct.`
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: { message: 'Unknown error' } }));
-    throw new Error(error.error?.message || 'API request failed');
+    const error = await response.json().catch(() => ({ error: { message: `HTTP ${response.status}` } }));
+    throw new Error(error.error?.message || `API request failed (${response.status})`);
   }
 
   const result = await response.json();

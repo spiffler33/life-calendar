@@ -36,22 +36,20 @@ export async function parseTowerInput(userInput: string): Promise<ParsedTowerIte
     });
 
     if (error) {
-      console.error('Edge function error:', error);
+      if (import.meta.env.DEV) console.error('Edge function error:', error);
       return [{ text: trimmed, status: 'active' }];
     }
 
     if (data.error) {
-      console.log('Parse service error:', data.error);
+      if (import.meta.env.DEV) console.error('Parse service error:', data.error);
       return [{ text: trimmed, status: 'active' }];
     }
-
-    console.log('Parsed results:', data);
 
     // Handle array of items
     const items = data.items || [data];
     return items.map((item: unknown) => validateParsedItem(item, trimmed));
   } catch (err) {
-    console.error('AI parsing failed:', err);
+    if (import.meta.env.DEV) console.error('AI parsing failed:', err);
     return [{ text: trimmed, status: 'active' }];
   }
 }

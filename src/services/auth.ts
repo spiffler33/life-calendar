@@ -108,7 +108,7 @@ export async function signUp(
     try {
       await createDefaultHabits(data.user.id);
     } catch (err) {
-      console.error('Failed to create default habits:', err);
+      if (import.meta.env.DEV) console.error('Failed to create default habits:', err);
       // Don't fail signup if habit creation fails
     }
   }

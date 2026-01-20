@@ -52,7 +52,7 @@ export default function TowerView() {
         await addTowerItem(toTowerItemInput(parsed));
       }
     } catch (err) {
-      console.error('Capture failed:', err);
+      if (import.meta.env.DEV) console.error('Capture failed:', err);
       // Fallback: add as simple active item
       await addTowerItem({ text });
     } finally {
