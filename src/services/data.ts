@@ -807,6 +807,27 @@ export async function getHabitStreak(habitId: string): Promise<{ current: number
   return { current: currentStreak, longest: longestStreak };
 }
 
+/**
+ * Get all completion dates for a habit
+ * Returns an array of date strings (YYYY-MM-DD)
+ */
+export async function getHabitCompletionDates(habitId: string): Promise<string[]> {
+  const userId = await getCurrentUserId();
+
+  const { data, error } = await supabase
+    .from('habit_completions')
+    .select('date')
+    .eq('user_id', userId)
+    .eq('habit_id', habitId)
+    .order('date', { ascending: false });
+
+  if (error) {
+    throw new DataServiceError(`Failed to fetch habit completions: ${error.message}`, error.code);
+  }
+
+  return (data || []).map(d => d.date);
+}
+
 // ============================================================================
 // Tower Items
 // ============================================================================
