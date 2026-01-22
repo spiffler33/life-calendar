@@ -105,15 +105,13 @@ export default function TowerView() {
   const timerItem = timerItemId ? state.tower.find(i => i.id === timerItemId) : null;
 
   return (
-    <div className="max-w-2xl mx-auto pb-20 min-h-screen overflow-y-auto">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="mb-6">
+      <div className="flex items-center justify-between">
         <h1 className="text-lg font-medium text-text">
           tower
         </h1>
       </div>
-
-      <div className="space-y-6">
 
       {/* NOW Section - Hero Item */}
       <section>
@@ -182,7 +180,6 @@ export default function TowerView() {
         onReactivate={handleReactivate}
         onDelete={deleteTowerItemById}
       />
-      </div>
 
       {/* Capture Input - Always visible, zero friction */}
       <CaptureInput
