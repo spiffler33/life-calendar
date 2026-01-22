@@ -107,11 +107,11 @@ export default function TowerView() {
   return (
     <div className="max-w-2xl mx-auto pb-20 min-h-screen overflow-y-auto">
       {/* Header */}
-      <header className="border-b border-border pb-4 mb-6">
-        <h1 className="text-lg font-medium tracking-wide uppercase text-text-muted">
-          Tower
+      <div className="mb-6">
+        <h1 className="text-lg font-medium text-text">
+          tower
         </h1>
-      </header>
+      </div>
 
       <div className="space-y-6">
 
