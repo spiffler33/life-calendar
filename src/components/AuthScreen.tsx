@@ -17,6 +17,7 @@ export function AuthScreen() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [usernameError, setUsernameError] = useState<string | null>(null);
+  const [showAbout, setShowAbout] = useState(false);
 
   const handleUsernameChange = useCallback((value: string) => {
     const normalized = value.toLowerCase();
@@ -64,11 +65,63 @@ export function AuthScreen() {
 
   return (
     <div className="min-h-screen bg-bg flex items-center justify-center p-4">
+      {/* About Modal */}
+      {showAbout && (
+        <div
+          className="fixed inset-0 bg-bg/90 flex items-center justify-center p-4 z-50"
+          onClick={() => setShowAbout(false)}
+        >
+          <div
+            className="w-full max-w-md bg-bg-card border border-border rounded p-6 space-y-4"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="text-xs text-text-muted uppercase tracking-wide">what is meridian</div>
+
+            <div className="text-sm text-text leading-relaxed space-y-3 font-mono">
+              <p>
+                Most tools try to manage your time. This one manages your attention.
+              </p>
+              <p>
+                Each day, it surfaces what matters now - one thing, then the next.
+                The rest waits out of sight. Not forgotten, just quiet.
+              </p>
+              <p>
+                Track habits without fanfare. See patterns emerge over weeks
+                and months. Notice what works. Discard what doesn't.
+              </p>
+              <p>
+                No badges. No streaks that punish you for living.
+                Just a calm record of days.
+              </p>
+              <p className="text-text-muted">
+                A place to think clearly.
+              </p>
+            </div>
+
+            <button
+              onClick={() => setShowAbout(false)}
+              className="w-full mt-4 px-3 py-2 text-xs font-mono text-text-muted hover:text-text border border-border rounded transition-colors"
+            >
+              close
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="w-full max-w-xs">
         {/* Title */}
-        <h1 className="text-lg font-mono text-text-secondary mb-8 text-center tracking-wider">
+        <h1 className="text-lg font-mono text-text-secondary mb-2 text-center tracking-wider">
           MERIDIAN
         </h1>
+
+        {/* What is this link */}
+        <button
+          type="button"
+          onClick={() => setShowAbout(true)}
+          className="w-full text-center text-xs font-mono text-text-muted hover:text-text mb-8 transition-colors"
+        >
+          what is this?
+        </button>
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">

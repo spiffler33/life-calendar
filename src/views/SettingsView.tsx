@@ -430,6 +430,64 @@ export function SettingsView() {
         </div>
       </section>
 
+      {/* About Meridian */}
+      <section className="bg-bg-card rounded border border-border p-4">
+        <div className="text-xs text-text-muted uppercase tracking-wide mb-3">about meridian</div>
+
+        <div className="text-sm text-text leading-relaxed space-y-4 font-mono">
+          <p className="text-text-muted">
+            A place to steer attention, track habits, and see patterns. Nothing more.
+          </p>
+
+          <div className="space-y-3 text-xs">
+            <div>
+              <span className="text-text">[t] tower</span>
+              <span className="text-text-muted ml-2">
+                - surfaces what needs doing now. one item at a time.
+                the rest stays queued, out of mind but not lost.
+                blocked items wait patiently in "follow up."
+              </span>
+            </div>
+
+            <div>
+              <span className="text-text">[h] habits</span>
+              <span className="text-text-muted ml-2">
+                - daily toggles. did you or didn't you. no judgement,
+                just data. set your three most important things each day.
+              </span>
+            </div>
+
+            <div>
+              <span className="text-text">[w] week</span>
+              <span className="text-text-muted ml-2">
+                - seven days at a glance. see which days held together
+                and which fell apart. navigate with arrow keys.
+              </span>
+            </div>
+
+            <div>
+              <span className="text-text">[y] year</span>
+              <span className="text-text-muted ml-2">
+                - the long view. a heatmap of your days.
+                patterns emerge that you couldn't see up close.
+              </span>
+            </div>
+
+            <div>
+              <span className="text-text">[s] settings</span>
+              <span className="text-text-muted ml-2">
+                - you are here. customize habits, themes, ai tone.
+              </span>
+            </div>
+          </div>
+
+          <p className="text-text-muted pt-2 border-t border-border">
+            use [0] to return to today. arrow keys to move through time.
+            everything saves automatically.
+          </p>
+        </div>
+      </section>
+
       {/* Account */}
       <section className="bg-bg-card rounded border border-border p-4">
         <div className="text-xs text-text-muted uppercase tracking-wide mb-3">account</div>
