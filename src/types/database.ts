@@ -96,6 +96,7 @@ export type Database = {
           date: string
           focus: string | null
           reflection: string | null
+          is_holiday: boolean
           created_at: string
           updated_at: string
         }
@@ -105,6 +106,7 @@ export type Database = {
           date: string
           focus?: string | null
           reflection?: string | null
+          is_holiday?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -114,6 +116,7 @@ export type Database = {
           date?: string
           focus?: string | null
           reflection?: string | null
+          is_holiday?: boolean
           created_at?: string
           updated_at?: string
         }

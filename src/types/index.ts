@@ -45,6 +45,7 @@ export interface DailyData {
   mit: MitData;
   habits: Record<HabitId, boolean>;
   reflection: string;
+  isHoliday?: boolean; // Rest day - streaks don't break
 }
 
 // Year theme (optional motivational framing)

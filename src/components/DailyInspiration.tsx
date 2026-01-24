@@ -2,26 +2,31 @@
  * Daily Inspiration
  *
  * Naval quote + goal countdown. Minimal, stoic.
+ * Shows rest-themed quotes on holiday days.
  */
 
 import { getDailyQuote } from '../data/navalQuotes';
+import { getRestQuote } from '../data/restQuotes';
 import { getDaysUntilEndOfYear, parseDate } from '../utils/dates';
 
 interface DailyInspirationProps {
   selectedDate: string;
+  isHoliday?: boolean;
 }
 
-export function DailyInspiration({ selectedDate }: DailyInspirationProps) {
+export function DailyInspiration({ selectedDate, isHoliday }: DailyInspirationProps) {
   const date = parseDate(selectedDate);
-  const quote = getDailyQuote(date);
+  const quote = isHoliday ? getRestQuote(date) : getDailyQuote(date);
   const daysLeft = getDaysUntilEndOfYear(selectedDate);
 
   return (
     <div className="space-y-2">
-      {/* Naval quote */}
+      {/* Quote */}
       <blockquote className="text-sm text-text-secondary italic border-l-2 border-border pl-3">
         "{quote}"
-        <cite className="block text-xs text-text-muted mt-1 not-italic">— Naval</cite>
+        {!isHoliday && (
+          <cite className="block text-xs text-text-muted mt-1 not-italic">— Naval</cite>
+        )}
       </blockquote>
 
       {/* Countdown */}

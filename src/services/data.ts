@@ -229,7 +229,7 @@ export async function getDailyEntry(date: string): Promise<DailyEntry | null> {
  */
 export async function upsertDailyEntry(
   date: string,
-  data: { focus?: string; reflection?: string }
+  data: { focus?: string; reflection?: string; isHoliday?: boolean }
 ): Promise<DailyEntry> {
   const userId = await getCurrentUserId();
 
@@ -240,6 +240,7 @@ export async function upsertDailyEntry(
     updated_at: string;
     focus?: string;
     reflection?: string;
+    is_holiday?: boolean;
   } = {
     user_id: userId,
     date,
@@ -247,6 +248,7 @@ export async function upsertDailyEntry(
   };
   if (data.focus !== undefined) upsertData.focus = data.focus;
   if (data.reflection !== undefined) upsertData.reflection = data.reflection;
+  if (data.isHoliday !== undefined) upsertData.is_holiday = data.isHoliday;
 
   const { data: result, error } = await supabase
     .from('daily_entries')

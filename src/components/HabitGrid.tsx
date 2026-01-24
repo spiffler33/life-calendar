@@ -15,6 +15,7 @@ interface HabitGridProps {
   habits: HabitDefinition[];
   completedHabits: Record<HabitId, boolean>;
   streaks: Record<HabitId, number>;
+  isHoliday?: boolean;
   onToggle: (habitId: HabitId) => void;
   onHabitStats?: (habitId: HabitId, anchorRect: DOMRect) => void;
 }
@@ -69,20 +70,22 @@ function HabitToggle({ habit, isCompleted, streak, onToggle, onStats }: HabitTog
   );
 }
 
-export function HabitGrid({ habits, completedHabits, streaks, onToggle, onHabitStats }: HabitGridProps) {
+export function HabitGrid({ habits, completedHabits, streaks, isHoliday, onToggle, onHabitStats }: HabitGridProps) {
   if (habits.length === 0) return null;
 
   const completedCount = Object.values(completedHabits).filter(Boolean).length;
 
   return (
-    <div className="bg-bg-card rounded border border-border p-4">
+    <div className={`bg-bg-card rounded border border-border p-4 ${isHoliday ? 'opacity-60' : ''}`}>
       <div className="flex items-center justify-between mb-3">
         <span className="text-xs font-medium text-text-secondary uppercase tracking-wide">
-          habits
+          habits {isHoliday && <span className="text-text-muted normal-case">(rest day)</span>}
         </span>
-        <span className="text-xs text-text-muted font-mono">
-          {completedCount}/{habits.length}
-        </span>
+        {!isHoliday && (
+          <span className="text-xs text-text-muted font-mono">
+            {completedCount}/{habits.length}
+          </span>
+        )}
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">

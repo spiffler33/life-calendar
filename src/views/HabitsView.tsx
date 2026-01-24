@@ -38,6 +38,7 @@ export function HabitsView({ selectedDate, onPrevious, onNext, onDateSelect }: H
     state,
     getDailyData,
     toggleHabit,
+    toggleHoliday,
     setReflection,
     getHabitStreak,
     addPack,
@@ -111,14 +112,33 @@ export function HabitsView({ selectedDate, onPrevious, onNext, onDateSelect }: H
         onDateSelect={onDateSelect}
       />
 
-      {/* Daily Naval quote */}
-      <DailyInspiration selectedDate={selectedDate} />
+      {/* Daily inspiration (rest quote on holidays) */}
+      <DailyInspiration selectedDate={selectedDate} isHoliday={dayData.isHoliday} />
 
-      {/* Status line */}
+      {/* Status line with holiday toggle */}
       {habits.length > 0 && (
-        <div className="text-xs text-text-muted font-mono">
-          {completedCount}/{habits.length} habits completed
-          {loadingStats && <span className="ml-2">...</span>}
+        <div className="flex items-center justify-between text-xs text-text-muted font-mono">
+          <div>
+            {!dayData.isHoliday && (
+              <>
+                {completedCount}/{habits.length} habits completed
+                {loadingStats && <span className="ml-2">...</span>}
+              </>
+            )}
+            {dayData.isHoliday && (
+              <span className="text-accent">rest day</span>
+            )}
+          </div>
+          <button
+            onClick={() => toggleHoliday(selectedDate)}
+            className={`text-xs font-mono transition-colors ${
+              dayData.isHoliday
+                ? 'text-accent hover:text-accent/80'
+                : 'text-text-muted hover:text-text-secondary'
+            }`}
+          >
+            {dayData.isHoliday ? '○ rest day' : '+ rest day'}
+          </button>
         </div>
       )}
 
@@ -127,6 +147,7 @@ export function HabitsView({ selectedDate, onPrevious, onNext, onDateSelect }: H
         habits={habits}
         completedHabits={dayData.habits}
         streaks={habitStreaks}
+        isHoliday={dayData.isHoliday}
         onToggle={habitId => toggleHabit(selectedDate, habitId)}
         onHabitStats={handleHabitStats}
       />

@@ -68,7 +68,7 @@ import type { TowerItemInput, PackInput, PackSessionInput } from '../services/da
 type Action =
   | { type: 'SET_HABITS'; payload: HabitDefinition[] }
   | { type: 'SET_COMPLETIONS'; payload: Record<string, Record<string, boolean>> }
-  | { type: 'SET_DAILY_ENTRIES'; payload: Record<string, { focus?: string; reflection?: string }> }
+  | { type: 'SET_DAILY_ENTRIES'; payload: Record<string, { focus?: string; reflection?: string; isHoliday?: boolean }> }
   | { type: 'SET_TASKS'; payload: { date: string; category: MitCategory; tasks: TodoItem[] }[] }
   | { type: 'SET_YEAR_THEMES'; payload: { year: number; theme: string }[] }
   | { type: 'TOGGLE_HABIT'; payload: { date: string; habitId: HabitId } }
@@ -79,6 +79,7 @@ type Action =
   | { type: 'SET_MIT_FIRST_STEP'; payload: { date: string; category: MitCategory; id: string; firstStep: string } }
   | { type: 'SET_FOCUS'; payload: { date: string; focus: string } }
   | { type: 'SET_REFLECTION'; payload: { date: string; reflection: string } }
+  | { type: 'SET_HOLIDAY'; payload: { date: string; isHoliday: boolean } }
   | { type: 'UPDATE_SETTINGS'; payload: Partial<AppSettings> }
   | { type: 'SET_YEAR_THEME'; payload: { year: number; theme: string } }
   | { type: 'SET_TOWER_ITEMS'; payload: TowerItem[] }
@@ -124,6 +125,7 @@ function appReducer(state: ExtendedAppState, action: Action): ExtendedAppState {
           ...(newDailyData[date] || createEmptyDailyData(date)),
           focus: entry.focus || '',
           reflection: entry.reflection || '',
+          isHoliday: entry.isHoliday || false,
         };
       }
       return {
@@ -308,6 +310,21 @@ function appReducer(state: ExtendedAppState, action: Action): ExtendedAppState {
       };
     }
 
+    case 'SET_HOLIDAY': {
+      const { date, isHoliday } = action.payload;
+      const dayData = state.dailyData[date] || createEmptyDailyData(date);
+      return {
+        ...state,
+        dailyData: {
+          ...state.dailyData,
+          [date]: {
+            ...dayData,
+            isHoliday,
+          },
+        },
+      };
+    }
+
     case 'UPDATE_SETTINGS': {
       return {
         ...state,
@@ -398,6 +415,7 @@ interface AppContextType {
   setMitFirstStep: (date: string, category: MitCategory, id: string, firstStep: string) => void;
   setFocus: (date: string, focus: string) => void;
   setReflection: (date: string, reflection: string) => void;
+  toggleHoliday: (date: string) => void;
   updateSettings: (settings: Partial<AppSettings>) => void;
   updateHabits: (habits: HabitDefinition[]) => void;
   setYearTheme: (year: number, theme: string) => void;
@@ -483,12 +501,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           dispatch({ type: 'SET_COMPLETIONS', payload: completionMap });
         }
 
-        // Convert daily entries to date -> { focus, reflection } map
-        const entriesMap: Record<string, { focus?: string; reflection?: string }> = {};
+        // Convert daily entries to date -> { focus, reflection, isHoliday } map
+        const entriesMap: Record<string, { focus?: string; reflection?: string; isHoliday?: boolean }> = {};
         for (const entry of dailyData.entries) {
           entriesMap[entry.date] = {
             focus: entry.focus || undefined,
             reflection: entry.reflection || undefined,
+            isHoliday: entry.is_holiday || false,
           };
         }
 
@@ -573,7 +592,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     [state.settings.yearThemes]
   );
 
-  // Calculate habit streak
+  // Calculate habit streak (skips holiday days)
   const getHabitStreak = useCallback(
     (habitId: HabitId, fromDate: string = getToday()): number => {
       let streak = 0;
@@ -586,6 +605,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
       while (true) {
         const dayData = state.dailyData[currentDate];
+
+        // Skip holiday days (they don't break or extend streaks)
+        if (dayData?.isHoliday) {
+          currentDate = addDays(currentDate, -1);
+          continue;
+        }
+
         if (dayData?.habits[habitId]) {
           streak++;
           currentDate = addDays(currentDate, -1);
@@ -740,6 +766,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     []
   );
 
+  // Toggle holiday mode with Supabase sync
+  const toggleHoliday = useCallback(
+    async (date: string) => {
+      const dayData = state.dailyData[date] || createEmptyDailyData(date);
+      const newValue = !dayData.isHoliday;
+
+      // Update local state immediately
+      dispatch({ type: 'SET_HOLIDAY', payload: { date, isHoliday: newValue } });
+
+      try {
+        await upsertDailyEntry(date, { isHoliday: newValue });
+      } catch (err) {
+        if (import.meta.env.DEV) console.error('Failed to save holiday status:', err);
+        // Revert on error
+        dispatch({ type: 'SET_HOLIDAY', payload: { date, isHoliday: !newValue } });
+      }
+    },
+    [state.dailyData]
+  );
+
   // Set year theme with Supabase sync
   const setYearTheme = useCallback(
     async (year: number, theme: string) => {
@@ -890,6 +936,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setMitFirstStep,
     setFocus,
     setReflection,
+    toggleHoliday,
     updateSettings: settings => dispatch({ type: 'UPDATE_SETTINGS', payload: settings }),
     updateHabits: habits => dispatch({ type: 'SET_HABITS', payload: habits }),
     setYearTheme,
